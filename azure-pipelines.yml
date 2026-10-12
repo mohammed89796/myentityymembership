@@ -1,0 +1,58 @@
+# Docker
+# Build a Docker image
+# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
+
+trigger:
+ - main
+ - stage
+ - production
+
+
+resources:
+- repo: self
+
+variables:
+  tag: '$(Build.BuildId)'
+  serialNumber: $[counter(variables['counterName'], 1)]
+
+stages:
+- stage: Build
+  displayName: Build image
+  jobs:
+  - job: Build
+    displayName: Build
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+    - task: Docker@2
+      displayName: Login to Docker Hub
+      inputs:
+        command: login
+        containerRegistry: buildup-registery   #DockerRegistry
+
+    - task: Docker@2
+      displayName: Build an image for MyMembership
+      inputs:
+        command: buildAndPush
+        repository: entitymembership.api
+        dockerfile: 'Dockerfile'
+        tags: |
+         v$(serialNumber)
+         latest
+    
+    # webhook steps here
+    - bash: |
+        echo "Branch: $(Build.SourceBranchName)"
+        TAG="v$(serialNumber)"
+
+        if [ "$(Build.SourceBranchName)" == "main" ]; then
+          curl -X POST -d {} "http://159.65.55.171:9000/api/stacks/webhooks/9dd938f7-639e-4298-b80d-504db79a4784?IMAGE_EntityMemberShipAPI_TAG=$TAG"
+        elif [ "$(Build.SourceBranchName)" == "stage" ]; then
+          curl -X POST -d {} "http://buildup-stage.buildup-egypt.com:9000/api/stacks/webhooks/9dd938f7-639e-4298-b80d-504db79a4784?IMAGE_EntityMemberShipAPI_TAG=$TAG"
+         elif [ "$(Build.SourceBranchName)" == "production" ]; then
+          curl -k -X POST -d {} "https://buildup-manage.buildup-egypt.com/api/stacks/webhooks/605c89df-e302-4be5-95a0-55356000c82b?IMAGE_EntityMemberShipAPI_TAG=$TAG"
+        else
+          echo "No webhook configured for this branch."
+        fi
+      displayName: Trigger Deployment Webhook
+      condition: succeeded()
