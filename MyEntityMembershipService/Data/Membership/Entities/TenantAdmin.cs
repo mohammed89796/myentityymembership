@@ -19,6 +19,7 @@ namespace MyEntityMembershipService.Data.Membership.Entities
         public ICollection<TenantAdminFacility> TenantAdminFacilities { get; set; } = new HashSet<TenantAdminFacility>();
         public ICollection<TenantAdminBranch> TenantAdminBranches { get; set; } = new HashSet<TenantAdminBranch>();
         public ICollection<TenantAdminVenue> TenantAdminVenues { get; set; } = new HashSet<TenantAdminVenue>();
+        public ICollection<CoachSlots> CoachSlots { get; set; } = new HashSet<CoachSlots>();
 
 
 

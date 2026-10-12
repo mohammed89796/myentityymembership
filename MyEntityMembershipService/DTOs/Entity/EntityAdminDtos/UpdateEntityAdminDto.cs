@@ -1,4 +1,7 @@
-﻿namespace MyEntityMembershipService.DTOs.Entity.EntityAdminDtos
+﻿using MyEntityMembershipService.Data.Membership.Entities;
+using MyEntityMembershipService.DTOs.Entity.CoachSlotDtos;
+
+namespace MyEntityMembershipService.DTOs.Entity.EntityAdminDtos
 {
     public class UpdateEntityAdminDto
     {
@@ -16,6 +19,8 @@
 
         public List<int>? VenuesIds { get; set; } = [];
         public List<int>? FacilitiesIds { get; set; } = [];
+        public UpdateCoachSlotDto? CoachSlots { get; set; } 
+
 
     }
 }

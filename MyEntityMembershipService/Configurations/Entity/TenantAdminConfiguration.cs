@@ -27,6 +27,10 @@ namespace MyEntityMembershipService.Configurations.Entity
             .WithOne(tb => tb.TenantAdmin)
             .HasForeignKey(tb => tb.TenantAdminId)
                 .OnDelete(DeleteBehavior.Cascade);
+            builder.HasMany(t => t.CoachSlots)
+            .WithOne(tb => tb.TenantAdmin)
+            .HasForeignKey(tb => tb.TenantAdminId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

@@ -185,6 +185,7 @@ namespace MyEntityMembershipService.Data
         public DbSet<AttainmentCategory> AttainmentCategories { get; set; }
         public DbSet<MemberSportLevel> MemberSportLevels { get; set; }
         public DbSet<ParentApplicationConfiguration> ParentApplicationConfiguration { get; set; }
+        public DbSet<CoachSlots>CoachSlots {get;set;}
 
         #endregion
 

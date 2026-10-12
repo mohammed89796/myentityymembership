@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using MyEntityMembershipService.DTOs.Entity.CoachSlotDtos;
 using MyEntityMembershipService.DTOs.Entity.EntityAdminDtos;
 using MyEntityMembershipService.Extensions;
 using MyEntityMembershipService.Repositories.Common;
@@ -29,14 +30,14 @@ namespace MyEntityMembershipService.Controllers.V1.Entity.EntityAdmin
         {
             int FederationId = int.Parse(User.FindFirst("tenantId")?.Value);
             if (!entityAdminDto.TenantId.HasValue)
-                entityAdminDto.TenantId = FederationId; 
+                entityAdminDto.TenantId = FederationId;
             var result = await entityAdminService.AddEntityAdmin(entityAdminDto);
             return result.GetResponse();
         }
         [HttpPost("Set-entity-admin")]
         public async Task<IResult> SetEntityAdmin(AddEntityAdminDto entityAdminDto)
         {
-            
+
             var result = await entityAdminService.AddEntityAdmin(entityAdminDto);
             return result.GetResponse();
         }
@@ -56,10 +57,10 @@ namespace MyEntityMembershipService.Controllers.V1.Entity.EntityAdmin
         }
 
         [HttpGet("GetEntityAdmins")]
-        public async Task<IResult> GetEntityAdmins([FromQuery]GetEntityAdminsParametersDto parameters)
+        public async Task<IResult> GetEntityAdmins([FromQuery] GetEntityAdminsParametersDto parameters)
         {
             int FederationId = int.Parse(User.FindFirst("tenantId")?.Value);
-            if(! parameters.TenantId.HasValue)
+            if (!parameters.TenantId.HasValue)
                 parameters.TenantId = FederationId;
             var result = await entityAdminService.GetEntityAdmins(parameters);
             return result.GetResponse();
@@ -76,7 +77,7 @@ namespace MyEntityMembershipService.Controllers.V1.Entity.EntityAdmin
         }
 
         [HttpGet("GetFederationEntitiesAdmins")]
-        public async Task<IResult> GetFederationEntitiesAdmins([FromQuery]GetFederationEntitiesAdminsParametersDto parameters)
+        public async Task<IResult> GetFederationEntitiesAdmins([FromQuery] GetFederationEntitiesAdminsParametersDto parameters)
         {
             var tenantIdValue = User.GetTenantId();
 
@@ -101,6 +102,12 @@ namespace MyEntityMembershipService.Controllers.V1.Entity.EntityAdmin
         {
             string UserId = User.GetUserId();
             var result = await entityAdminService.UpdateEntityAdminStatus(UserId);
+            return result.GetResponse();
+        }
+        [HttpPost("AddCoachSlot")]
+        public async Task<IResult> AddCoachSlot(AddCoachSlotDto addCoachSlotDto)
+        {
+            var result = await entityAdminService.AddCoachSlot(addCoachSlotDto);
             return result.GetResponse();
         }
     }

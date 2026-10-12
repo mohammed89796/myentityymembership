@@ -1,4 +1,6 @@
-﻿namespace MyEntityMembershipService.DTOs.Membership.TenantDtos
+﻿using MyEntityMembershipService.DTOs.Entity.CoachSlotDtos;
+
+namespace MyEntityMembershipService.DTOs.Membership.TenantDtos
 {
     public class TenantAdminDto
     {

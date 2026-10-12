@@ -8,6 +8,7 @@ using MyEntityMembershipService.DTOs.Entity.AtheleteDtos;
 using MyEntityMembershipService.DTOs.Entity.BatchDtos;
 using MyEntityMembershipService.DTOs.Entity.BeltDtos;
 using MyEntityMembershipService.DTOs.Entity.BranchDtos;
+using MyEntityMembershipService.DTOs.Entity.CoachSlotDtos;
 using MyEntityMembershipService.DTOs.Entity.EntityAdminDtos;
 using MyEntityMembershipService.DTOs.Entity.FacilityDtos;
 using MyEntityMembershipService.DTOs.Entity.FederationDtos;
@@ -297,7 +298,6 @@ namespace MyEntityMembershipService.Helper.MappingProfile.Entity
                 .ForMember(t => t.TenantAdminVenues, opt => opt.MapFrom(src => src.VenuesIds.Select(v => new TenantAdminVenue { VenueId = v })))
                 .ForMember(t => t.TenantAdminFacilities, opt => opt.MapFrom(src => src.FacilitiesIds.Select(f => new TenantAdminFacility { FacilityId = f })))
                 .ForMember(t => t.TenantAdminBranches , opt => opt.MapFrom(src => src.BranchsIds.Select(b => new TenantAdminBranch { BranchId = b })));
-
             CreateMap<TenantAdmin, TenantAdminDto>()
                 .ForMember(dest => dest.TenantName, opt => opt.MapFrom(src => src.Tenant.Name))
                 .ForMember(dest => dest.AreaIds, opt => opt.MapFrom(src => src.TenantAreaAdmins.Select(a => a.AreaId)))
@@ -342,6 +342,10 @@ namespace MyEntityMembershipService.Helper.MappingProfile.Entity
               .ReverseMap();
 
             CreateMap<Package, PackageSummaryDto>().ReverseMap();
+            CreateMap<CoachSlots, CoachSlotDto>().ReverseMap();
+            CreateMap<CreateCoachSlotDto, CoachSlots>();
+            CreateMap<UpdateCoachSlotDto, CoachSlots>();
+
 
         }
         private string ResolveImage(string image)

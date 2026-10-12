@@ -2291,7 +2291,7 @@ namespace MyEntityMembershipService.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<bool>("AllowMultipleEventsAtSameTime")
+                    b.Property<bool?>("AllowMultipleEventsAtSameTime")
                         .HasColumnType("tinyint(1)");
 
                     b.Property<string>("CreatedBy")
@@ -4555,6 +4555,57 @@ namespace MyEntityMembershipService.Migrations
                     b.HasIndex("UnitId");
 
                     b.ToTable("CancellationConfigurations");
+                });
+
+            modelBuilder.Entity("MyEntityMembershipService.Data.Membership.Entities.CoachSlots", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Capacity")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("CreatedByUsername")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime?>("CreationDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("Day")
+                        .HasColumnType("int");
+
+                    b.Property<TimeOnly>("EndTime")
+                        .HasColumnType("time(6)");
+
+                    b.Property<int>("GlobalTenantId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime?>("ModificationDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<TimeOnly>("StartTime")
+                        .HasColumnType("time(6)");
+
+                    b.Property<int>("TenantAdminId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantAdminId");
+
+                    b.ToTable("CoachSlots");
                 });
 
             modelBuilder.Entity("MyEntityMembershipService.Data.Membership.Entities.ConfigrationFieldResponse", b =>
@@ -9328,6 +9379,17 @@ namespace MyEntityMembershipService.Migrations
                     b.Navigation("Unit");
                 });
 
+            modelBuilder.Entity("MyEntityMembershipService.Data.Membership.Entities.CoachSlots", b =>
+                {
+                    b.HasOne("MyEntityMembershipService.Data.Membership.Entities.TenantAdmin", "TenantAdmin")
+                        .WithMany("CoachSlots")
+                        .HasForeignKey("TenantAdminId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("TenantAdmin");
+                });
+
             modelBuilder.Entity("MyEntityMembershipService.Data.Membership.Entities.ConfigrationFieldResponse", b =>
                 {
                     b.HasOne("MyEntityMembershipService.Data.Membership.Entities.Configuration", "Configuration")
@@ -10894,6 +10956,8 @@ namespace MyEntityMembershipService.Migrations
 
             modelBuilder.Entity("MyEntityMembershipService.Data.Membership.Entities.TenantAdmin", b =>
                 {
+                    b.Navigation("CoachSlots");
+
                     b.Navigation("TenantAdminBranches");
 
                     b.Navigation("TenantAdminFacilities");

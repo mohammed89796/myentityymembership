@@ -1,4 +1,5 @@
-﻿using MyEntityMembershipService.DTOs.Entity.EntityAdminDtos;
+﻿using MyEntityMembershipService.DTOs.Entity.CoachSlotDtos;
+using MyEntityMembershipService.DTOs.Entity.EntityAdminDtos;
 using MyEntityMembershipService.DTOs.Membership.EntityDtos;
 using MyEntityMembershipService.Repositories.Common;
 
@@ -16,5 +17,6 @@ namespace MyEntityMembershipService.Services.Entity.EntityAdminService
         Task<Response<GetEntityAdminDto>> UpdateEntityAdminStatus(string UserId);
 
         Task<Response<string>> DeactiveEntityAdmin(string userId); 
+        Task<Response<bool>>AddCoachSlot(AddCoachSlotDto addCoachSlotDto);
     }
 }

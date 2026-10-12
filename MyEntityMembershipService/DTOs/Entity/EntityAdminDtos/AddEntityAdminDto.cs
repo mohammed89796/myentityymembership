@@ -1,4 +1,6 @@
-﻿namespace MyEntityMembershipService.DTOs.Entity.EntityAdminDtos
+﻿using MyEntityMembershipService.Data.Membership.Entities;
+
+namespace MyEntityMembershipService.DTOs.Entity.EntityAdminDtos
 {
     public class AddEntityAdminDto
     {

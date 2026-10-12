@@ -1,5 +1,6 @@
 ﻿using MyEntityMembershipService.Data.Entity.Entities.Enums;
 using MyEntityMembershipService.Data.Membership.Entities.Enums;
+using MyEntityMembershipService.DTOs.Entity.CoachSlotDtos;
 
 namespace MyEntityMembershipService.DTOs.Entity.EntityAdminDtos
 {
@@ -22,6 +23,7 @@ namespace MyEntityMembershipService.DTOs.Entity.EntityAdminDtos
 
 
         public List<AdminBranchDto> Branches { get; set; }
+        public List<CoachSlotDto> CoachSlots { get; set; } = [];
 
         public int Status { get; set; }
         public string? EntityType { get; set; }

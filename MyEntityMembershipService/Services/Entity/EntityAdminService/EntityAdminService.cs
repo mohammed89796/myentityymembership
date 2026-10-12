@@ -4,6 +4,7 @@ using MyEntityMembershipService.Data;
 using MyEntityMembershipService.Data.Entity.Entities.Enums;
 using MyEntityMembershipService.Data.Membership.Entities;
 using MyEntityMembershipService.Data.Membership.Entities.Enums;
+using MyEntityMembershipService.DTOs.Entity.CoachSlotDtos;
 using MyEntityMembershipService.DTOs.Entity.EntityAdminDtos;
 using MyEntityMembershipService.DTOs.Membership.EntityDtos;
 using MyEntityMembershipService.Extensions;
@@ -58,13 +59,48 @@ namespace MyEntityMembershipService.Services.Entity.EntityAdminService
                 iq => iq.Include(e => e.TenantAdminFacilities),
                 iq => iq.Include(e => e.TenantAdminVenues),
                 iq => iq.Include(e => e.TenantAdminBranches),
-                iq => iq.Include(e => e.TenantAdminRoles)
-                    ]
+                iq => iq.Include(e => e.TenantAdminRoles),
+                iq => iq.Include(e => e.CoachSlots)
+                ]
                 };
 
                 var admin = await unitOfWork.Repository<TenantAdmin>().GetWithSpecifications(spec);
                 if (admin is null)
                     return new ResponseHandler().BadRequest<UpdateEntityAdminDto>("There is No Admin with this Id");
+
+                if (entityAdminDto.CoachSlots is not null)
+                {
+                    var slotDto = entityAdminDto.CoachSlots;
+
+                    var tenantAdmin = await unitOfWork.Repository<TenantAdmin>()
+                        .GetByIdAsync(slotDto.TenantAdminId);
+
+                    if (tenantAdmin is null || tenantAdmin.Id != admin.Id)
+                    {
+                        return new ResponseHandler()
+                            .NotFound<UpdateEntityAdminDto>("Tenant admin not found");
+                    }
+
+                    var coachSlot = await unitOfWork.Repository<CoachSlots>()
+                        .GetByIdAsync(slotDto.CoachSlotId);
+
+                    if (coachSlot is null || coachSlot.TenantAdminId != tenantAdmin.Id)
+                    {
+                        return new ResponseHandler()
+                            .NotFound<UpdateEntityAdminDto>(
+                                "Coach slot not found for this tenant admin");
+                    }
+
+                    coachSlot.Capacity = slotDto.Capacity;
+                    coachSlot.StartTime = slotDto.StartTime;
+                    coachSlot.EndTime = slotDto.EndTime;
+                    coachSlot.Day = slotDto.Day;
+
+                    unitOfWork.Repository<CoachSlots>().Update(coachSlot);
+                    await unitOfWork.Save();
+
+                    return new ResponseHandler().Success(entityAdminDto);
+                }
 
                 // Update basic properties
                 admin.FirstName = entityAdminDto.FirstName;
@@ -72,7 +108,6 @@ namespace MyEntityMembershipService.Services.Entity.EntityAdminService
                 admin.Email = entityAdminDto.Email;
                 admin.PhoneNumber = entityAdminDto.PhoneNumber;
                 admin.TenantId = entityAdminDto.TenantId;
-
                 // Sports
                 if (entityAdminDto.SportsIds is not null)
                 {
@@ -92,7 +127,7 @@ namespace MyEntityMembershipService.Services.Entity.EntityAdminService
                 // Branches
                 if (entityAdminDto.BranchsIds is not null)
                 {
-                        admin.TenantAdminBranches.Clear();
+                    admin.TenantAdminBranches.Clear();
                     foreach (var branchId in entityAdminDto.BranchsIds)
                         admin.TenantAdminBranches.Add(new TenantAdminBranch { BranchId = branchId, TenantAdminId = admin.Id });
                 }
@@ -112,12 +147,12 @@ namespace MyEntityMembershipService.Services.Entity.EntityAdminService
                     foreach (var roleId in entityAdminDto.RoleIds)
                         admin.TenantAdminRoles.Add(new TenantAdminRole { RoleId = roleId, TenantAdminId = admin.Id });
                 }
-
                 unitOfWork.Repository<TenantAdmin>().Update(admin);
                 await unitOfWork.Save();
 
                 return new ResponseHandler().Success(entityAdminDto);
             }
+
             catch (Exception ex)
             {
                 Log.Error(ex, "Error updating entity admin: {Message}. Inner: {InnerMessage}",
@@ -135,10 +170,10 @@ namespace MyEntityMembershipService.Services.Entity.EntityAdminService
                 (string.IsNullOrEmpty(parameters.SearchBy) || admin.FirstName.ToLower().Contains(parameters.SearchBy.ToLower()) ||
                 admin.LastName.ToLower().Contains(parameters.SearchBy.ToLower()) || admin.PhoneNumber.Contains(parameters.SearchBy)));
 
-                var spec = new GeneralSpecifications<TenantAdmin>(admin => admin.TenantId == parameters.TenantId && 
-                (!parameters.Status.HasValue || admin.EntityAdminStatus == (EntityAdminStatus) parameters.Status) &&
-                (string.IsNullOrEmpty(parameters.SearchBy) || admin.FirstName.ToLower().Contains(parameters.SearchBy.ToLower()) || 
-                admin.LastName.ToLower().Contains(parameters.SearchBy.ToLower()) || admin.PhoneNumber.Contains(parameters.SearchBy) ),
+                var spec = new GeneralSpecifications<TenantAdmin>(admin => admin.TenantId == parameters.TenantId &&
+                (!parameters.Status.HasValue || admin.EntityAdminStatus == (EntityAdminStatus)parameters.Status) &&
+                (string.IsNullOrEmpty(parameters.SearchBy) || admin.FirstName.ToLower().Contains(parameters.SearchBy.ToLower()) ||
+                admin.LastName.ToLower().Contains(parameters.SearchBy.ToLower()) || admin.PhoneNumber.Contains(parameters.SearchBy)),
                 parameters.PageIndex, parameters.PageSize)
                 {
                     Includes = [
@@ -149,14 +184,15 @@ namespace MyEntityMembershipService.Services.Entity.EntityAdminService
                         .Include(admin => admin.TenantAdminVenues)
                         .Include(admin => admin.TenantAreaAdmins)
                         .ThenInclude(area => area.Area),
+                        iq=>iq.Include(admin=>admin.CoachSlots)
                         ]
                 };
                 var admins = await unitOfWork.Repository<TenantAdmin>().GetAllWithSpecifications(spec);
                 var adminsDto = mapper.Map<List<GetEntityAdminDto>>(admins);
                 if (adminsDto.Count == 0)
                     return new ResponseHandler().Success(new List<GetEntityAdminDto>());
-               
-                return new ResponseHandler().Success(adminsDto , new { NumberOfPages = (int)Math.Ceiling((double)totalAdmins.Count / parameters.PageSize) });
+
+                return new ResponseHandler().Success(adminsDto, new { NumberOfPages = (int)Math.Ceiling((double)totalAdmins.Count / parameters.PageSize) });
             }
             catch (Exception ex)
             {
@@ -232,12 +268,12 @@ namespace MyEntityMembershipService.Services.Entity.EntityAdminService
             {
 
                 var tenantAdmins = await fetchService.GetTenantAdmin(httpContextAccessor.HttpContext.User.GetUserId());
-                 GeneralSpecifications<Tenant> FederationSpec;
+                GeneralSpecifications<Tenant> FederationSpec;
 
-               
+
                 var areasId = tenantAdmins.TenantAreaAdmins.Select(area => area.AreaId).ToList();
 
-                FederationSpec = new GeneralSpecifications<Tenant>(federation => federation.Id == parameters.FederationId && ( !areasId.Any() || federation.Entites.Any(t => t.TenantAdmins.Any(admin => admin.TenantAreaAdmins.Any(area => areasId.Contains(area.AreaId))))))
+                FederationSpec = new GeneralSpecifications<Tenant>(federation => federation.Id == parameters.FederationId && (!areasId.Any() || federation.Entites.Any(t => t.TenantAdmins.Any(admin => admin.TenantAreaAdmins.Any(area => areasId.Contains(area.AreaId))))))
                 {
                     Includes = [
                         iq => iq.Include(e => e.Entites.Where(ent =>
@@ -251,7 +287,7 @@ namespace MyEntityMembershipService.Services.Entity.EntityAdminService
                             .ThenInclude(t => t.TenantAreaAdmins)
                             .ThenInclude(t => t.Area)
                             .Include(e =>e.Entites).ThenInclude(t => t.TenantAdmins).ThenInclude(t => t.TenantAdminRoles)
-                            
+
                             ]
                 };
                 var federation = await unitOfWork.Repository<Tenant>().GetWithSpecifications(FederationSpec);
@@ -260,10 +296,10 @@ namespace MyEntityMembershipService.Services.Entity.EntityAdminService
 
                 var totalCount = admins.Count;
                 var result = admins.Skip((parameters.PageIndex - 1) * parameters.PageSize).Take(parameters.PageSize).ToList();
-                
-                return new ResponseHandler().Success(result, new {NumberOfPages = (int)Math.Ceiling((double)totalCount / parameters.PageSize)  });
+
+                return new ResponseHandler().Success(result, new { NumberOfPages = (int)Math.Ceiling((double)totalCount / parameters.PageSize) });
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Log.Error(ex, "Error retrieving federation entity admins: {Message}", ex.Message);
                 return new ResponseHandler().BadRequest<List<GetEntityAdminDto>>("Something went wrong");
@@ -294,10 +330,10 @@ namespace MyEntityMembershipService.Services.Entity.EntityAdminService
                     result.EntityType = TenantType.Entity.ToString();
                 else
                     result.EntityType = TenantType.Federation.ToString();
-                
+
                 return new ResponseHandler().Success(result);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Log.Error(ex, "Error updating entity admin status: {Message}", ex.Message);
                 return new ResponseHandler().BadRequest<GetEntityAdminDto>("Something went wrong");
@@ -309,9 +345,10 @@ namespace MyEntityMembershipService.Services.Entity.EntityAdminService
             try
             {
                 var spec = new GeneralSpecifications<TenantAdmin>(t => t.UserId == userId);
-                
+
                 var entityAdmin = await unitOfWork.Repository<TenantAdmin>().GetWithSpecifications(spec);
-                if (entityAdmin is null) {
+                if (entityAdmin is null)
+                {
                     Log.Warning("Entity admin with UserId {UserId} not found.", userId);
                     return new ResponseHandler().NotFound<string>("Entity admin not found.");
                 }
@@ -340,28 +377,66 @@ namespace MyEntityMembershipService.Services.Entity.EntityAdminService
                 var tenantSpec = new GeneralSpecifications<TenantAdmin>(
                     t => t.UserId == userId
                     );
-                
-                tenantSpec.AddInclude(q => q.Include( t=> t.TenantAdminBranches));
+
+                tenantSpec.AddInclude(q => q.Include(t => t.TenantAdminBranches));
                 tenantSpec.AddInclude(q => q.Include(t => t.TenantAdminFacilities));
                 tenantSpec.AddInclude(q => q.Include(t => t.TenantAdminSports));
                 tenantSpec.AddInclude(q => q.Include(t => t.TenantAdminVenues));
+                tenantSpec.AddInclude(q => q.Include(t => t.CoachSlots));
+
 
                 var tenantAdmin = await unitOfWork.Repository<TenantAdmin>().GetWithSpecifications(tenantSpec);
-                
-                if (tenantAdmin is null) {
+                var slotsCount = tenantAdmin?.CoachSlots?.Count;
+
+                if (tenantAdmin is null)
+                {
                     Log.Warning("Tenant admin with UserId {UserId} not found.", userId);
                     return new ResponseHandler().NotFound<TenantAdminDto>($"Tenant admin with userId {userId} not found.");
                 }
 
                 var tenantAdminDto = mapper.Map<TenantAdminDto>(tenantAdmin);
-                return new ResponseHandler().Success(tenantAdminDto);
 
+                return new ResponseHandler().Success(tenantAdminDto);
             }
             catch (Exception ex)
             {
                 Log.Error(ex, "Error occurred while getting TenantAdmin by UserId: {UserId}", userId);
                 return new ResponseHandler().BadRequest<TenantAdminDto>($"Failed to get tenant admin for userId {userId}.");
 
+            }
+        }
+        public async Task<Response<bool>> AddCoachSlot(AddCoachSlotDto addCoachSlotDto)
+        {
+            try
+            {
+                var tenantAdminId = addCoachSlotDto.TenantAdminId;
+                var tenantAdmin = await unitOfWork.Repository<TenantAdmin>().GetByIdAsync(tenantAdminId);
+
+                if (tenantAdmin == null)
+                {
+                    Log.Error("No tenantAdmin with this id {tenantAdminId}", tenantAdminId);
+                    return new ResponseHandler().NotFound<bool>("Tenant admin not found");
+                }
+                var isCoach = await unitOfWork.Repository<TenantAdmin>().IsExistsAsync(admin =>
+                    admin.Id == tenantAdmin.Id &&
+                    admin.TenantAdminRoles.Any(role => role.RoleId == CoachRole));
+                if (!isCoach)
+                {
+                    return new ResponseHandler().BadRequest<bool>("Tenant admin is not a coach");
+                }
+                var slots = mapper.Map<List<CoachSlots>>(addCoachSlotDto.CoachSlots);
+                foreach (var slot in slots)
+                {
+                    slot.TenantAdminId = addCoachSlotDto.TenantAdminId;
+                }
+                unitOfWork.Repository<CoachSlots>().AddRange(slots);
+                await unitOfWork.Save();
+                return new ResponseHandler().Success(true);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Error adding coach slots");
+                return new ResponseHandler().BadRequest<bool>("Something went wrong");
             }
         }
     }

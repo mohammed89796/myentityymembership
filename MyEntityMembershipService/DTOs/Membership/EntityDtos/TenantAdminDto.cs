@@ -1,6 +1,7 @@
 ﻿using MyEntityMembershipService.Data;
 using MyEntityMembershipService.Data.Membership.Entities;
 using MyEntityMembershipService.Data.Membership.Entities.Enums;
+using MyEntityMembershipService.DTOs.Entity.CoachSlotDtos;
 
 namespace MyEntityMembershipService.DTOs.Membership.EntityDtos
 {
@@ -22,5 +23,7 @@ namespace MyEntityMembershipService.DTOs.Membership.EntityDtos
         public List<int> FacilityIds { get; set; } = new();
         public List<int> BranchIds { get; set; } = new();
         public List<int> VenueIds { get; set; } = new();
+        public List<CoachSlotDto> CoachSlots { get; set; }=new();
+
     }
 }
